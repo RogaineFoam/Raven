@@ -2,19 +2,22 @@ package raven.armory.model;
 
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
-import raven.game.model.RavenBot;
 import raven.math.Geometry;
 import raven.math.Vector2D;
 import raven.messaging.Dispatcher;
 import raven.messaging.RavenMessage;
 import raven.script.RavenScript;
-import raven.systems.RavenObject;
 import raven.ui.GameCanvas;
 
 public class Slug extends RavenProjectile {
 
 	private double slugTimePersist;
+	private EventListenerList listeners;
 
 	public Slug(IRavenBot shooter, Vector2D target) {
 		super(target,
@@ -65,20 +68,9 @@ public class Slug extends RavenProjectile {
 	}
 
 	//These projectiles are visible if the current time is less than OriginTime + timePersist
-	private boolean IsVisibleToPlayer()
+	public boolean IsVisibleToPlayer()
 	{
 		return slugTimePersist > 0;
-	}
-
-
-
-	public void render()
-	{
-		if (IsVisibleToPlayer() && isImpacted)
-		{
-			GameCanvas.greenPen();
-			GameCanvas.line(origin, impactPoint);
-		}
 	}
 
 	public void update(double delta)
@@ -111,6 +103,30 @@ public class Slug extends RavenProjectile {
 		}
 	}
 
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
 
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
 
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
+	}
 }

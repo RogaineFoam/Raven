@@ -1,7 +1,10 @@
 package raven.armory.model;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
-import raven.game.model.RavenBot;
 import raven.math.Geometry;
 import raven.math.Vector2D;
 import raven.messaging.Dispatcher;
@@ -13,6 +16,7 @@ public class Rocket extends RavenProjectile {
 
 	private double blastRadius; 
 	private double currentBlastRadius;
+	private EventListenerList listeners;
 
 	public Rocket(IRavenBot shooter, Vector2D target) {
 		super(target,
@@ -28,6 +32,7 @@ public class Rocket extends RavenProjectile {
 		);	
 		currentBlastRadius = 0.0;
 		blastRadius = RavenScript.getDouble("Rocket_BlastRadius");
+		listeners = new EventListenerList();
 	}
 
 	private void InflictDamageOnBotsWithinBlastRadius(){
@@ -141,5 +146,34 @@ public class Rocket extends RavenProjectile {
 		}
 	}
 
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
 
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
+	}
+
+	public double getCurrentBlastRadius() {
+		return currentBlastRadius;
+	}
 }

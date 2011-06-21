@@ -5,13 +5,12 @@ import java.util.List;
 
 import raven.game.interfaces.IRavenBot;
 import raven.game.interfaces.IRavenGame;
+import raven.game.interfaces.IRenderInvoker;
 import raven.game.model.MovingEntity;
-import raven.game.model.RavenBot;
 import raven.math.Geometry;
 import raven.math.Vector2D;
-import raven.systems.RavenObject;
 
-public abstract class RavenProjectile extends MovingEntity {
+public abstract class RavenProjectile extends MovingEntity implements IRenderInvoker {
 
 	protected int shooterID;
 	protected Vector2D vTarget;
@@ -89,4 +88,6 @@ public abstract class RavenProjectile extends MovingEntity {
 
 	public boolean IsDead() { return isDead; }
 	public boolean HasImpacted() { return isImpacted; }
+	public Vector2D getOrigin() { return origin; }
+	public Vector2D getImpactPoint() { return impactPoint; }
 }

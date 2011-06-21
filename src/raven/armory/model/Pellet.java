@@ -1,16 +1,20 @@
 package raven.armory.model;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
 import raven.math.Geometry;
 import raven.math.Vector2D;
 import raven.messaging.Dispatcher;
 import raven.messaging.RavenMessage;
 import raven.script.RavenScript;
-import raven.ui.GameCanvas;
 
 public class Pellet extends RavenProjectile {
 
 	private double pelletTimePersist;
+	private EventListenerList listeners;
 
 
 	public Pellet(IRavenBot shooter, Vector2D target) {
@@ -26,6 +30,7 @@ public class Pellet extends RavenProjectile {
 				RavenScript.getDouble("Pellet_MaxForce"));
 		pelletTimePersist = RavenScript.getDouble("Pellet_Persistance");
 		this.setPos(shooter.pos());
+		listeners = new EventListenerList();
 	}
 
 
@@ -37,17 +42,6 @@ public class Pellet extends RavenProjectile {
 		}
 
 		return pelletTimePersist > 0;
-	}
-
-	public void render()
-	{
-		if ((pelletTimePersist > 0) && HasImpacted()) {
-			GameCanvas.yellowPen();
-			GameCanvas.line(origin, impactPoint);
-
-			GameCanvas.brownBrush();
-			GameCanvas.circle(impactPoint, 3);
-		}
 	}
 
 	public void update(double delta)
@@ -115,6 +109,36 @@ public class Pellet extends RavenProjectile {
 				RavenMessage.MSG_TAKE_THAT_MF,
 				damageInflicted);
 	}
+	
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
+	}
 
 
+	public double getPelletTimePersist() {
+		return pelletTimePersist;
+	}
 }
