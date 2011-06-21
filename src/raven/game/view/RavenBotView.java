@@ -32,7 +32,7 @@ public class RavenBotView implements IDrawable {
 	public RavenBotView(IRavenBot data){
 		bot = data;
 		setUpVertexBuffer();
-		
+		bot.addDrawableListener(this);
 		numSecondsHitPersistant = RavenScript.getDouble("HitFlashTime");
 	}
 	
@@ -124,6 +124,11 @@ public class RavenBotView implements IDrawable {
 			point.y = temp.y;
 		}
 		
+	}
+
+	@Override
+	public void run() {
+		render();
 	}
 
 

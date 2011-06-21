@@ -3,6 +3,7 @@
  */
 package raven.armory.view;
 
+import raven.armory.model.RavenProjectile;
 import raven.game.interfaces.IDrawable;
 
 /**
@@ -11,11 +12,13 @@ import raven.game.interfaces.IDrawable;
  */
 public class ProjectileView implements IDrawable {
 
+	private RavenProjectile model;
+	
 	/**
 	 * 
 	 */
-	public ProjectileView() {
-		// TODO Auto-generated constructor stub
+	public ProjectileView(RavenProjectile model) {
+		this.model = model;
 	}
 
 	/* (non-Javadoc)
@@ -23,8 +26,12 @@ public class ProjectileView implements IDrawable {
 	 */
 	@Override
 	public void render() {
-		// TODO Auto-generated method stub
+		// TODO Get data from model and render
+	}
 
+	@Override
+	public void run() {
+		render();
 	}
 
 }

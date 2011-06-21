@@ -110,4 +110,9 @@ public class RavenGameView implements IDrawable {
 		}
 	}
 
+	@Override
+	public void run() {
+		render();
+	}
+
 }

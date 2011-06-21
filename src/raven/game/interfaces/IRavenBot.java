@@ -8,7 +8,7 @@ import raven.systems.RavenSensoryMemory;
 import raven.systems.RavenSteering;
 import raven.systems.RavenWeaponSystem;
 
-public interface IRavenBot extends IUpdatable {
+public interface IRavenBot extends IUpdatable, IRenderInvoker {
 
 	public boolean isAlive();
 	public boolean isReadyForTriggerUpdate();

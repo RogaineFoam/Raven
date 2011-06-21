@@ -14,7 +14,7 @@ import raven.systems.RavenObject;
 import raven.triggers.Trigger;
 import raven.triggers.TriggerSystem;
 
-public interface IRavenMap {
+public interface IRavenMap extends IRenderInvoker{
 
 	public abstract void addSpawnPoint(Vector2D point);
 

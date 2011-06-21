@@ -14,6 +14,7 @@ public class RavenDoorView implements IDrawable {
 	
 	public RavenDoorView(RavenDoor d){
 		door = d;
+		d.addDrawableListener(this);
 		
 		vectorToP2Norm = door.to().sub(door.from());
 		vectorToP2Norm.normalize();
@@ -54,6 +55,11 @@ public class RavenDoorView implements IDrawable {
 		currentSize = Math.min(Math.max(0, currentSize), door.getSize());
 		
 		changePosition(door.from(), door.from().add(vectorToP2Norm).mul(currentSize));
+	}
+
+	@Override
+	public void run() {
+		render();
 	}
 
 }

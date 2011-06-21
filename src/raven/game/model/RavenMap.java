@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
 import raven.game.interfaces.IRavenMap;
 import raven.math.CellSpacePartition;
@@ -32,6 +36,9 @@ import raven.utils.Pair;
 
 @XStreamAlias("RavenMap")
 public class RavenMap implements IRavenMap {
+	
+	private EventListenerList listeners;
+
 	
 	/** the walls that comprise the current map's architecture. */
 	private ArrayList<Wall2D> walls;
@@ -189,6 +196,7 @@ public class RavenMap implements IRavenMap {
 		navGraph = new SparseGraph<NavGraphNode<Trigger<IRavenBot>>, NavGraphEdge>();
 		spacePartition = new CellSpacePartition<NavGraphNode<Trigger<IRavenBot>>>(0.0, 0.0, 0, 0, 0);
 		cellSpaceNeighborhoodRange = 0.0;
+		listeners = new EventListenerList();
 	}
 	
 	private Object readResolve() {
@@ -417,5 +425,32 @@ public class RavenMap implements IRavenMap {
 	@Override
 	public TriggerSystem<Trigger<IRavenBot>> getTriggerSystem() {
 		return triggerSystem;
+	}
+
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
 	}
 }

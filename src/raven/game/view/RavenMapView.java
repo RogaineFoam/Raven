@@ -14,6 +14,7 @@ public class RavenMapView implements IDrawable {
 	
 	public RavenMapView(IRavenMap map){
 		this.map = map;
+		map.addDrawableListener(this);
 	}
 	
 	public void render() {
@@ -48,5 +49,10 @@ public class RavenMapView implements IDrawable {
 			GameCanvas.filledCircle(point, 7);
 		}
 		
+	}
+
+	@Override
+	public void run() {
+		render();
 	}
 }

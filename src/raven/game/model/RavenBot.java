@@ -1,13 +1,14 @@
 package raven.game.model;
 
-import java.util.ArrayList;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
 import raven.game.interfaces.IRavenGame;
 import raven.game.interfaces.IRavenTargetingSystem;
 import raven.goals.model.GoalThink;
 import raven.math.C2DMatrix;
-import raven.math.Transformations;
 import raven.math.Vector2D;
 import raven.messaging.Dispatcher;
 import raven.messaging.RavenMessage;
@@ -19,8 +20,6 @@ import raven.systems.RavenSensoryMemory;
 import raven.systems.RavenSteering;
 import raven.systems.RavenTargetingSystem;
 import raven.systems.RavenWeaponSystem;
-import raven.ui.GameCanvas;
-import raven.ui.RavenUserOptions;
 import raven.utils.Log;
 import raven.utils.Regulator;
 
@@ -28,6 +27,8 @@ public class RavenBot extends MovingEntity implements IRavenBot {
 	private enum Status {
 		ALIVE, DEAD, SPAWNING
 	}
+	
+	private EventListenerList listeners;
 
 	/** alive, dead or spawning? */
 	private Status status;
@@ -171,6 +172,7 @@ public class RavenBot extends MovingEntity implements IRavenBot {
 
 		setEntityType(RavenObject.BOT);
 
+		listeners = new EventListenerList();
 		
 
 		// a bot starts off facing in the direction it is heading
@@ -241,6 +243,8 @@ public class RavenBot extends MovingEntity implements IRavenBot {
 		fieldOfView = Math.toRadians(RavenScript.getDouble("Bot_FOV"));
 
 		setEntityType(RavenObject.BOT);
+
+		listeners = new EventListenerList();
 	}
 	
 	// The usual suspects
@@ -627,5 +631,32 @@ public class RavenBot extends MovingEntity implements IRavenBot {
 	
 	public RavenSensoryMemory getSensoryMem() {
 		return sensoryMem;
+	}
+
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// bots update so often, may as well.
+		return true;
 	}
 }

@@ -10,7 +10,7 @@ import raven.navigation.model.PathManager;
 import raven.systems.RavenObject;
 import raven.utils.MapLoadedException;
 
-public interface IRavenGame {
+public interface IRavenGame extends IRenderInvoker{
 
 	/**
 	 * Update the game state over the given timestep in seconds.

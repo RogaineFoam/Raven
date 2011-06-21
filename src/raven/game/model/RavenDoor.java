@@ -3,12 +3,15 @@ package raven.game.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import raven.game.model.RavenDoor.Status;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
+import raven.game.interfaces.IRenderInvoker;
 import raven.math.Vector2D;
 import raven.math.Wall2D;
-import raven.ui.GameCanvas;
 
-public class RavenDoor extends BaseGameEntity {
+public class RavenDoor extends BaseGameEntity implements IRenderInvoker{
 	
 	public enum Status {
 		OPEN,
@@ -39,6 +42,8 @@ public class RavenDoor extends BaseGameEntity {
 	protected Vector2D vectorToP2Norm;
 	
 	protected double currentSize;
+
+	private EventListenerList listeners;
 	
 	public void open() {
 		if (status == Status.OPENING) {
@@ -93,5 +98,32 @@ public class RavenDoor extends BaseGameEntity {
 	
 	public double getSize(){
 		return size;
+	}
+	
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// bots update so often, may as well.
+		return true;
 	}
 }

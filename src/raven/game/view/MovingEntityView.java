@@ -27,4 +27,9 @@ public class MovingEntityView implements IDrawable {
 
 	}
 
+	@Override
+	public void run() {
+		render();
+	}
+
 }

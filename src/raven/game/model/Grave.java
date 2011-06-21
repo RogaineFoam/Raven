@@ -3,11 +3,11 @@
  */
 package raven.game.model;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 
+import raven.game.interfaces.IDrawable;
+import raven.game.interfaces.IRenderInvoker;
 import raven.math.Vector2D;
 import raven.script.RavenScript;
 
@@ -15,35 +15,48 @@ import raven.script.RavenScript;
  * @author chester
  *
  */
-public class Grave extends BaseGameEntity {
+public class Grave extends BaseGameEntity implements IRenderInvoker {
 
 	public Vector2D position;
 	public double timeLeft;
+	private EventListenerList listeners;
 	public static double lifeTime = RavenScript.getDouble("GraveLifetime");
-	
-	private List<Vector2D> vecRIPVB;
-	private List<Vector2D> vecRIBVBTrans;
 	
 	public Grave(Vector2D position) {
 		super(BaseGameEntity.getNextValidID());
 		this.position = position;
 		timeLeft = lifeTime;
-		
-		vecRIPVB = new ArrayList<Vector2D>();
-		vecRIPVB.add(new Vector2D(-4, -5));
-		vecRIPVB.add(new Vector2D(-4, 3));
-		vecRIPVB.add(new Vector2D(-3, 5));
-		vecRIPVB.add(new Vector2D(-1, 6));
-		vecRIPVB.add(new Vector2D(1, 6));
-		vecRIPVB.add(new Vector2D(3, 5));
-		vecRIPVB.add(new Vector2D(4, 3));
-		vecRIPVB.add(new Vector2D(4, -5));
-		vecRIPVB.add(new Vector2D(-4, -5));
 	}
 	
 	@Override
 	public void update(double delta) {
 		timeLeft -= delta;
 	}
+	
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
 
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// bots update so often, may as well.
+		return true;
+	}
 }

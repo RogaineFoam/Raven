@@ -2,14 +2,19 @@ package raven.game.model;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.HashSet;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 
 import raven.armory.model.Bolt;
 import raven.armory.model.Pellet;
 import raven.armory.model.RavenProjectile;
 import raven.armory.model.Rocket;
 import raven.armory.model.Slug;
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
 import raven.game.interfaces.IRavenGame;
 import raven.game.interfaces.IRavenMap;
@@ -57,6 +62,8 @@ public class RavenGame implements IRavenGame {
 	/** Holds a request to load a new map. This is set from another thread */
 	private String newMapPath;
 	private volatile int botsToAdd;
+
+	private EventListenerList listeners;
 
 	private void clear() {
 		Log.debug("game", "Clearing Map");
@@ -110,7 +117,7 @@ public class RavenGame implements IRavenGame {
 
 	public RavenGame() {
 		EntityManager.reset();
-		
+		listeners = new EventListenerList();
 		try {
 			loadMap(RavenScript.getString("StartMap"));
 		} catch (IOException e) {
@@ -214,6 +221,7 @@ public class RavenGame implements IRavenGame {
 					selectedBot = null;
 				}
 				notifyAllBotsOfRemoval(bot);
+				bot.removeDrawableListeners();
 				bots.remove(bot);
 			}
 			
@@ -657,5 +665,30 @@ public class RavenGame implements IRavenGame {
 	public List<RavenProjectile> getProjectiles() {
 		return projectiles;
 	}
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
 
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// bots update so often, may as well.
+		return true;
+	}
 }
