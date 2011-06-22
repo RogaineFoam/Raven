@@ -5,7 +5,12 @@ package raven.armory.model;
 
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
+import raven.game.interfaces.IRenderInvoker;
 import raven.game.model.RavenBot;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.goals.fuzzy.FuzzyVariable;
@@ -22,33 +27,20 @@ import raven.ui.GameCanvas;
  * @author chester
  *
  */
-public class Shotgun extends RavenWeapon {
+public class Shotgun extends RavenWeapon implements IRenderInvoker{
 
 	private int numBallsInShell;
 	private double spread;
-
+	private EventListenerList listeners;
 
 	public Shotgun(IRavenBot owner){
 		super(RavenObject.SHOTGUN, RavenScript.getInt("ShotGun_DefaultRounds"), RavenScript.getInt("ShotGun_MaxRoundsCarried"), RavenScript.getDouble("ShotGun_FiringFreq"),
 				RavenScript.getDouble("ShotGun_IdealRange"), RavenScript.getDouble("Pellet_MaxSpeed"), owner);
+		listeners = new EventListenerList();
 		
 		numBallsInShell = RavenScript.getInt("ShotGun_NumBallsInShell");
 		spread = RavenScript.getDouble("ShotGun_Spread");
 		
-		Vector2D[] weapon = {
-				new Vector2D(0, 0),
-				new Vector2D(0, -2),
-				new Vector2D(10, -2),
-				new Vector2D(10, 0),
-				new Vector2D(0, 0),
-				new Vector2D(0, 2),
-				new Vector2D(10, 2),
-				new Vector2D(10, 0)};
-
-		for(Vector2D v : weapon){
-			// Dirty scaling hack
-			getWeaponVectorBuffer().add(v.mul(1.0/10));
-		}
 		InitializeFuzzyModule();
 	}
 
@@ -111,20 +103,6 @@ public class Shotgun extends RavenWeapon {
 	}
 
 	@Override
-	public void render(){
-		List<Vector2D> weaponTrans = Transformations.WorldTransform(getWeaponVectorBuffer(),
-				getOwner().pos(),
-				getOwner().facing(),
-				getOwner().facing().perp(),
-				getOwner().scale());
-
-		GameCanvas.brownPen();
-
-		GameCanvas.polyLine(weaponTrans);
-
-	}
-
-	@Override
 	public double GetDesireability(double distanceToTarget){
 		double desire = 0;  
 		if (getRoundsRemaining() != 0)
@@ -138,5 +116,32 @@ public class Shotgun extends RavenWeapon {
 		}
 
 		return desire;
+	}
+	
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
 	}
 }

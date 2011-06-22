@@ -3,61 +3,40 @@
  */
 package raven.armory.model;
 
-import java.util.List;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
-import raven.game.model.RavenBot;
+import raven.game.interfaces.IRenderInvoker;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.goals.fuzzy.FuzzyVariable;
 import raven.goals.fuzzy.FzSet;
 import raven.goals.fuzzy.FzVery;
-import raven.math.Transformations;
 import raven.math.Vector2D;
 import raven.script.RavenScript;
 import raven.systems.RavenObject;
-import raven.ui.GameCanvas;
 
 /**
  * @author chester
  *
  */
-public class Blaster extends RavenWeapon {
+public class Blaster extends RavenWeapon implements IRenderInvoker{
 
 	private static int blasterDefaultRounds = RavenScript.getInt("Blaster_DefaultRounds");
 	private static final int blasterMaxRounds = RavenScript.getInt("Blaster_MaxRoundsCarried");
 	private static double blasterFiringFreq = RavenScript.getDouble("Blaster_FiringFreq");
 	private static double blasterIdealRange = RavenScript.getDouble("Blaster_IdealRange");
 	private static double blasterMaxSpeed = RavenScript.getDouble("Blaster_MaxSpeed");
+	
+	private EventListenerList listeners;
 
 	public Blaster(IRavenBot owner)
 	{
 		super(RavenObject.BLASTER, blasterDefaultRounds, blasterMaxRounds, blasterFiringFreq, blasterIdealRange, blasterMaxSpeed, owner);
 
-		final Vector2D[] weapon = {new Vector2D(0, -1),
-				new Vector2D(10, -1),
-				new Vector2D(10 , 1),
-				new Vector2D(0, 1)};
-
-		for(Vector2D v : weapon){
-			// Dirty scaling hack
-			getWeaponVectorBuffer().add(v.mul(1.0/10));
-		}
-
 		InitializeFuzzyModule();
-	}
-
-	@Override
-	public void render(){
-		List<Vector2D> tempBuffer = Transformations.WorldTransform(getWeaponVectorBuffer(),
-				getOwner().pos(),
-				getOwner().facing(),
-				getOwner().facing().perp(),
-				getOwner().scale());
-
-		setWeaponVectorTransBuffer(tempBuffer);
-
-		GameCanvas.greenPen();
-		GameCanvas.closedShape(tempBuffer);
+		listeners = new EventListenerList();
 	}
 
 	@Override
@@ -99,5 +78,30 @@ public class Blaster extends RavenWeapon {
 		getFuzzyModule().AddRule(Target_Far, new FzVery(Undesirable));
 	}
 
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
 
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
+	}
 }

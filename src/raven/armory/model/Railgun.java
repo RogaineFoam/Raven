@@ -5,7 +5,12 @@ package raven.armory.model;
 
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
+
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
+import raven.game.interfaces.IRenderInvoker;
 import raven.game.model.RavenBot;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.goals.fuzzy.FuzzyVariable;
@@ -23,26 +28,19 @@ import raven.ui.GameCanvas;
  * @author chester
  *
  */
-public class Railgun extends RavenWeapon {
+public class Railgun extends RavenWeapon implements IRenderInvoker{
 
 	private static int railgunDefaultRounds = RavenScript.getInt("RailGun_DefaultRounds");
 	public static final int railgunMaxRounds = RavenScript.getInt("RailGun_MaxRoundsCarried");
 	private static double railgunFiringFreq = RavenScript.getDouble("RailGun_FiringFreq");
 	private static double railgunIdealRange = RavenScript.getDouble("RailGun_IdealRange");
 	private static double railgunMaxSpeed = RavenScript.getDouble("Slug_MaxSpeed");
+	
+	private EventListenerList listeners;
 
 	public Railgun(IRavenBot owner){
 		super(RavenObject.RAIL_GUN, railgunDefaultRounds, railgunMaxRounds, railgunFiringFreq, railgunIdealRange, railgunMaxSpeed, owner);
-
-		final Vector2D[] weapon = {new Vector2D(0, -1),
-				new Vector2D(10, -1),
-				new Vector2D(10 , 1),
-				new Vector2D(0, 1)};
-		for(Vector2D v : weapon){
-			// Dirty scaling hack
-			getWeaponVectorBuffer().add(v.mul(1.0/10));
-		}
-
+		listeners = new EventListenerList();
 		InitializeFuzzyModule();
 	}
 
@@ -81,18 +79,6 @@ public class Railgun extends RavenWeapon {
 	}
 
 	@Override
-	public void render(){
-		List<Vector2D> thisWeaponShape = Transformations.WorldTransform(getWeaponVectorBuffer(),
-				getOwner().pos(),
-				getOwner().facing(),
-				getOwner().facing().perp(),
-				getOwner().scale());
-		setWeaponVectorTransBuffer(thisWeaponShape);
-		GameCanvas.bluePen();
-		GameCanvas.closedShape(thisWeaponShape);
-	}
-
-	@Override
 	public boolean ShootAt(Vector2D position){
 		if ((getRoundsRemaining() > 0) && timeUntilAvailable <= 0){
 			//fire a round
@@ -123,4 +109,30 @@ public class Railgun extends RavenWeapon {
 		return desire;
 	}
 
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
+	}
 }

@@ -229,7 +229,7 @@ public class RavenWeaponSystem {
 	public double reactionTime() { return reactionTime; }
 	
 	public void renderCurrentWeapon() {
-		getCurrentWeapon().render();
+		getCurrentWeapon().notifyDrawables();
 	}
 
 	public void renderDesirabilities() {

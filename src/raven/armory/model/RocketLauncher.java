@@ -3,24 +3,24 @@
  */
 package raven.armory.model;
 
-import java.util.List;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 
+import raven.game.interfaces.IDrawable;
 import raven.game.interfaces.IRavenBot;
-import raven.game.model.RavenBot;
+import raven.game.interfaces.IRenderInvoker;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.goals.fuzzy.FuzzyVariable;
 import raven.goals.fuzzy.FzAnd;
 import raven.goals.fuzzy.FzSet;
+import raven.math.Vector2D;
 import raven.script.RavenScript;
 import raven.systems.RavenObject;
-import raven.ui.GameCanvas;
-import raven.math.Transformations;
-import raven.math.Vector2D;
 /**
  * @author chester
  *
  */
-public class RocketLauncher extends RavenWeapon {
+public class RocketLauncher extends RavenWeapon implements IRenderInvoker {
 
 	private static int rlDefaultRounds = RavenScript.getInt("RocketLauncher_DefaultRounds");
 	public static final int rlMaxRounds = RavenScript.getInt("RocketLauncher_MaxRoundsCarried");
@@ -28,25 +28,12 @@ public class RocketLauncher extends RavenWeapon {
 	private static double rlIdealRange = RavenScript.getDouble("RocketLauncher_IdealRange");
 	private static double rlMaxSpeed = RavenScript.getDouble("Rocket_MaxSpeed");
 
+	private EventListenerList listeners;
+	
 	public RocketLauncher(IRavenBot owner){
 		super(RavenObject.ROCKET_LAUNCHER, rlDefaultRounds, rlMaxRounds, rlFiringFreq, rlIdealRange, rlMaxSpeed, owner);
-
-		final Vector2D[] weaponVectors = {
-				new Vector2D(0, -3),
-				new Vector2D(6, -3),
-				new Vector2D(6, -1),
-				new Vector2D(15, -1),
-				new Vector2D(15, 1),
-				new Vector2D(6, 1),
-				new Vector2D(6, 3),
-				new Vector2D(0, 3)
-		};
-		for (Vector2D v : weaponVectors)
-		{
-			// Dirty scaling hack
-			getWeaponVectorBuffer().add(v.mul(1.0/10));
-		}
-
+		listeners = new EventListenerList();
+		
 		//setup the fuzzy module
 		InitializeFuzzyModule();
 	}
@@ -83,18 +70,6 @@ public class RocketLauncher extends RavenWeapon {
 		getFuzzyModule().AddRule(new FzAnd(Target_Far, Ammo_Low), Undesirable);
 	}
 
-	@Override
-	public void render(){
-		List<Vector2D> weaponsTrans = Transformations.WorldTransform(getWeaponVectorBuffer(),
-				getOwner().pos(),
-				getOwner().facing(),
-				getOwner().facing().perp(),
-				getOwner().scale());
-
-		GameCanvas.redPen();
-
-		GameCanvas.closedShape(weaponsTrans);
-	}
 
 	@Override
 	public boolean ShootAt(Vector2D position){
@@ -125,5 +100,32 @@ public class RocketLauncher extends RavenWeapon {
 		}
 
 		return desire;
+	}
+
+	@Override
+	public void addDrawableListener(IDrawable drawable) {
+		listeners.add(IDrawable.class, drawable);
+	}
+
+	@Override
+	public void removeDrawableListeners() {
+		IDrawable[] draws = listeners.getListeners(IDrawable.class);
+		for(IDrawable d : draws){
+			listeners.remove(IDrawable.class, d);
+		}
+	}
+
+	@Override
+	public void notifyDrawables() {
+		if(!shouldDraw()) return;
+		for(IDrawable drawable : listeners.getListeners(IDrawable.class)){
+			SwingUtilities.invokeLater(drawable);
+		}
+	}
+
+	@Override
+	public boolean shouldDraw() {
+		// maps update so often, may as well.
+		return true;
 	}
 }

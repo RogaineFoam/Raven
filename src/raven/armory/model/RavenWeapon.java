@@ -3,10 +3,8 @@
  */
 package raven.armory.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import raven.game.interfaces.IRavenBot;
+import raven.game.interfaces.IRenderInvoker;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.math.Vector2D;
 import raven.systems.RavenObject;
@@ -15,7 +13,7 @@ import raven.systems.RavenObject;
  * @author chester
  *
  */
-public abstract class RavenWeapon {
+public abstract class RavenWeapon implements IRenderInvoker {
 
 	private IRavenBot owner;
 	private RavenObject itemType;
@@ -23,7 +21,6 @@ public abstract class RavenWeapon {
 	private int roundsLeft, maxRoundCapacity; 
 	private double rateOfFire, lastDesireabilityScore, idealRange, maxProjectileSpeed;
 	public double timeUntilAvailable;
-	private List<Vector2D> WeaponVB, WeaponVBTrans;
 	
 	public RavenWeapon(RavenObject weaponType, int defaultRoundsCount, int maxCapacity, 
 					   double RoF, double iRange, double projectileSpd, IRavenBot holder)
@@ -39,8 +36,6 @@ public abstract class RavenWeapon {
 		lastDesireabilityScore = 0;
 		
 		fuzzyModule = new FuzzyModule();
-		WeaponVB = new ArrayList<Vector2D>();
-		WeaponVBTrans = new ArrayList<Vector2D>();
 	}
 	
 	
@@ -49,10 +44,6 @@ public abstract class RavenWeapon {
 	/** Causes the weapon to shoot at the chosen position. Each weapons overrides this method.
 	 * @param position */
 	public abstract boolean ShootAt(Vector2D position);
-	
-	/** Draws the weapon on the display via GameCanvas static calls.
-	 * Overridden by each weapon. */
-	public abstract void render();
 	
 	/**
 	 * This overridden method uses fuzzy logic to assign a desireability value to this weapon, based on the distance and the logic
@@ -71,12 +62,6 @@ public abstract class RavenWeapon {
 	public int getRoundsRemaining() { return roundsLeft; }
 	
 	public void decrementRoundsLeft() { if(roundsLeft > 0) --roundsLeft; }
-	
-	public List<Vector2D> getWeaponVectorBuffer() { return WeaponVB; }
-	
-	public List<Vector2D> getWeaponVectorTransBuffer() { return WeaponVBTrans; }
-	
-	public void setWeaponVectorTransBuffer(List<Vector2D> tempBuffer) { WeaponVBTrans = tempBuffer; }
 	
 	public IRavenBot getOwner() { return owner; }
 	
@@ -122,6 +107,4 @@ public abstract class RavenWeapon {
 	public void setCurrentRounds(int rounds){
 		this.roundsLeft = rounds;
 	}
-	
-	
 }
